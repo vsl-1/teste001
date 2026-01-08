@@ -112,7 +112,7 @@
     <div class="video-wrapper" id="videoWrapper">
         
         <video id="myVideo" playsinline loop muted poster="https://via.placeholder.com/800x450/333333/999999?text=Carregando...">
-            <source src="https://cdn.jsdelivr.net/gh/brengrassy/adios3@f37b1edd755ed644c4388ab468828cd3fd953b32/Adios-Gluten.m3u8" type="video/mp4">
+            <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
         </video>
 
         <div class="initial-overlay" id="initialOverlay">
@@ -154,4 +154,53 @@
 
         function animateTurboBar() {
             if (!hasStarted) {
-                // Enche falso até 15% para
+                // Enche falso até 15% para dar ansiedade
+                if (fakeProgress < 15) fakeProgress += 0.06;
+                progressBar.style.width = fakeProgress + '%';
+                requestAnimationFrame(animateTurboBar);
+            }
+        }
+
+        // --- CLIQUE NO PLAYER (Lógica Principal) ---
+        wrapper.addEventListener('click', () => {
+            if (!hasStarted) {
+                // PRIMEIRO CLIQUE (Tira a capa vermelha e solta o som)
+                hasStarted = true;
+                video.muted = false;
+                video.currentTime = 0; // Reinicia para pegar a copy do zero
+                video.loop = false;
+                video.play();
+                
+                initialOverlay.style.opacity = '0';
+                setTimeout(() => { initialOverlay.style.display = 'none'; }, 300);
+            } else {
+                // CLIQUES SEGUINTES (Pausar ou Dar Play)
+                if (video.paused) {
+                    video.play();
+                    pauseOverlay.style.display = 'none'; // Some o triângulo
+                } else {
+                    video.pause();
+                    pauseOverlay.style.display = 'block'; // Aparece o triângulo igual imagem 2
+                }
+            }
+        });
+
+        // --- ATUALIZAÇÃO DA BARRA REAL ---
+        video.addEventListener('timeupdate', () => {
+            if (hasStarted) {
+                const percentage = (video.currentTime / video.duration) * 100;
+                // Mantém a lógica visual de não voltar para trás bruscamente
+                const visualPercentage = Math.max(percentage, fakeProgress); 
+                progressBar.style.width = visualPercentage + '%';
+            }
+        });
+
+        // Se o vídeo acabar, mostrar o botão de play de novo
+        video.addEventListener('ended', () => {
+            pauseOverlay.style.display = 'block';
+        });
+
+    </script>
+
+</body>
+</html>
