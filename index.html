@@ -3,17 +3,21 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Player VSL - Final Limpo</title>
+    <title>Player VSL - Final</title>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    
     <style>
         /* RESET BÁSICO */
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', sans-serif; }
+        
+        /* Se for usar no Elementor/Wordpress, pode remover o 'body' abaixo */
         body { background-color: #f0f2f5; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
 
         /* CONTAINER DO VÍDEO */
         .video-wrapper {
             position: relative;
             width: 100%;
-            max-width: 800px;
+            max-width: 800px; /* Largura máxima do player */
             aspect-ratio: 16 / 9;
             background: #000;
             border-radius: 8px;
@@ -31,8 +35,7 @@
 
         /* 1. OVERLAY INICIAL (Caixa Vermelha) */
         .initial-overlay {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0,0,0,0.1);
             display: flex; /* Começa visível */
             align-items: center;
@@ -99,9 +102,7 @@
 
     <div class="video-wrapper" id="videoWrapper">
         
-        <video id="myVideo" playsinline loop muted poster="https://via.placeholder.com/800x450/333333/999999?text=Cargando...">
-            <source src="https://www.w3schools.com/html/mov_bbb.mp4" type="video/mp4">
-        </video>
+        <video id="myVideo" playsinline loop muted poster="https://via.placeholder.com/800x450/333333/999999?text=Cargando..."></video>
 
         <div class="initial-overlay" id="initialOverlay">
             <div class="play-box">
@@ -133,14 +134,29 @@
         const pauseOverlay = document.getElementById('pauseOverlay');
         const progressBar = document.getElementById('progressBar');
 
+        // SEU LINK JÁ CONFIGURADO AQUI:
+        const videoSrc = 'https://cdn.jsdelivr.net/gh/kvsbr/videos/video-up3-ozempic/playlist.m3u8';
+
         let hasStarted = false; 
 
-        // 1. AUTOPLAY MUDO NO FUNDO (Barra parada)
-        window.addEventListener('load', () => {
-            video.play().catch(() => {});
-        });
+        // --- 1. CARREGAMENTO INTELIGENTE (HLS) ---
+        if (Hls.isSupported()) {
+            // Para PC, Android, Chrome, Firefox
+            const hls = new Hls();
+            hls.loadSource(videoSrc);
+            hls.attachMedia(video);
+            hls.on(Hls.Events.MANIFEST_PARSED, function() {
+                video.play().catch(() => {});
+            });
+        } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+            // Para iPhone/Safari (Roda nativo)
+            video.src = videoSrc;
+            video.addEventListener('loadedmetadata', function() {
+                video.play().catch(() => {});
+            });
+        }
 
-        // 2. LÓGICA DE CLIQUES
+        // --- 2. LÓGICA DE CLIQUES (Visual VTurb) ---
         wrapper.addEventListener('click', () => {
             if (!hasStarted) {
                 // PRIMEIRO CLIQUE: Ativa o vídeo real
@@ -165,7 +181,7 @@
             }
         });
 
-        // 3. BARRA DE PROGRESSO (Só move se hasStarted for true)
+        // --- 3. BARRA DE PROGRESSO ---
         video.addEventListener('timeupdate', () => {
             if (hasStarted) {
                 const percentage = (video.currentTime / video.duration) * 100;
